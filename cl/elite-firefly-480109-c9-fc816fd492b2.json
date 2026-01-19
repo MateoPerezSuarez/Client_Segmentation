@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "elite-firefly-480109-c9",
+  "private_key_id": "fc816fd492b2ea7d0cdaef2818379bc8f56623fd",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC++qJitC2gqnaq\nG2YW4y7akdnPpYoRgZnipYpHxiWvaqUPbmTzJ6ELwUwmrhhVxYi5oz0LYYckDh8f\n1bUQWNqNTaJlM9Cy1Chgi6A5c+PPdNbz0HO21NtL9BFWRE116RkS1lkGU1q/KDja\nJTv7z96PGBrw41bv0VuOWbtvmlhAhHhWB/gz88jhz6G7eOVIo1NVvmaOTxt4A/MF\nFG44hk7l4RgdZhEUUqiInS8QQa5Dc1uuJpjpRtGnt+q/+kNoeqNx9kSTJJH8Mcq3\nXhejsvNTpxUiDOmXgJ/s1no/k1oYSkz1VuPPicXH4376TAhVAeG8SX0pgVaHccMw\nhDupOXIlAgMBAAECggEAHJcCxkn45qt+NjsBzn1WH0xkUgyTHcnMErz7dYE5VQhf\nC29YV3pgRpU6ZDP92qFGtZu1YMXJ6GDg0fA5OehDV5H+tK3MGWlfXgypANDTktQH\n9doH6J/28GjqS4LQIc2yfjpue17xH9rSn/2g/DKDO+K87cDq2934mdffEncFrSqk\n3t//ZqNYGlJVjNhaasRn89KAr9uTfHHRoIQdSfWBurX2Dtj3yl7+ueZIp4Aw6AVT\nLZgfp43kvNoB+dLiG/r6rFhPpesGhqXG5DOaBAVnSysbHQzkFH0RXSj0HL3VZ7IJ\n/eg8et416xrcxkJJfMMT1do7Qg8Lq0gf7+8xpzAAxQKBgQD8JKEHKYnoM8B3F3JS\nr/VCJgLZtNduBNQG0w8xsvBjnvzwYEx73SJhpNiFBS2sBeJ4HLGDhe9Br+O3QrFA\ngjd33KOyLgfqGQRihLCFjFP6Rnoxv6e1ykpVjBQk4XEgdJQdjQvNe1XaJIiFhrsC\n8ZXJvN6sOMvGbWGZGhUBfNOmswKBgQDB5n35gR422Sdbt5/I61JUtags//lgru69\ndCxhmSkrv1hoAtilfSZik8rcJdPjIcVODnY5o83PGBYx+vrJKKrLk/4BDNI5/dYw\nirQWmipBp2Agua1ErIohuAhO55FaI0UAT4ZjCkNLfwNorvPyZCoJTyFPESlEXvRX\n59rR8ogvxwKBgQCK/DHa/dWrriMwQjddRuq9TLCTirCZT4YEQQEGFymU8EVixuJC\nAJH8Gt7S7BjR0uiT5tUet4w7vBWcpeGIun6SzodZJzBrpOCa4aNf6gs8UO74TznF\n5jz1TOKpta8jAb/HTkEsQgj/1tV+LNcW903mxvpDGoeQ2ChNOWhMyp7sKwKBgQCJ\nbEJ8QvaXCPDMICguzhlb0CORQRoNW+34eA28XkC/sK2HifzhzQEXfIeZ33V81MJx\nv+4qi92hmQCiC68SQrBJ+GlddSjJ0Q2s+aEJI9ovDeEjUHVs5pw/qZ65zYVGzRhq\nT/J+3xcyuqI/3z8l27evQVXqI8+LlYC3jKuZgLrkoQKBgQCNkEfi8doy7hsxkJ0w\nWjFFTCIEskYWAo06aM2I81bu+5v0/33VJCd4xaqiWlCwRlcveo2xLwGv8FjctiS5\nEEdUhaM70Z8sRy9cAKDKvS5daKifLwGE1lluYl7/556qF5wEAe4jd6/EpjF9cv3O\nwLyxzuS30R7XcmaTENU4I0xCUg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "mateo-pruebas@elite-firefly-480109-c9.iam.gserviceaccount.com",
+  "client_id": "112829283011437251195",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/mateo-pruebas%40elite-firefly-480109-c9.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
