@@ -1,0 +1,34 @@
+[server]
+# Aumentar límite de tamaño de archivo
+maxUploadSize = 500
+
+# Habilitar CORS si es necesario
+enableCORS = false
+
+# Desactivar estadísticas de uso
+gatherUsageStats = false
+
+[browser]
+# Desactivar la recarga automática de la página
+serverAddress = "localhost"
+gatherUsageStats = false
+
+[runner]
+# Desactivar fast rerun para evitar ejecuciones innecesarias
+fastReruns = false
+
+# Tiempo de espera para reconexión
+magicEnabled = true
+
+[client]
+# Desactivar toolbar de desarrollo
+showErrorDetails = false
+toolbarMode = "minimal"
+
+[theme]
+# Tema base
+base = "dark"
+primaryColor = "#E63946"
+backgroundColor = "#0F1117"
+secondaryBackgroundColor = "#1A1D27"
+textColor = "#F1FAEE"
