@@ -1,0 +1,17 @@
+RESUMEN EJECUTIVO - SEGMENTACIÓN LRFMS
+==================================================
+
+Total de clientes: 4,338
+Clusters identificados: 5
+Calidad de segmentación (Silhouette): 0.4799
+
+DISTRIBUCIÓN DE CLIENTES:
+--------------------------------------------------
+Cluster 0: 309 clientes (7.1%)
+Cluster 1: 1,456 clientes (33.6%)
+Cluster 2: 1,522 clientes (35.1%)
+Cluster 3: 13 clientes (0.3%)
+Cluster 4: 1,038 clientes (23.9%)
+
+Cluster de mayor valor: Cluster 3
+Valor promedio: $127,338.30

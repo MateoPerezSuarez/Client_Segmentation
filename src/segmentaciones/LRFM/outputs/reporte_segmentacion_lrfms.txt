@@ -1,0 +1,92 @@
+======================================================================
+REPORTE DE SEGMENTACIÓN DE CLIENTES - MODELO LRFMS
+======================================================================
+
+Fecha de análisis: 2026-02-16 19:12:04
+Fecha de referencia: 2011-12-10
+Parámetro P (Recency'): 3
+Total de clientes: 4,338
+Número de clusters: 5
+Silhouette Score: 0.4799
+
+======================================================================
+PERFILES DE CLUSTERS
+======================================================================
+
+         Length  Recency_Prime  Frequency  Monetary  Num_Clientes  Porcentaje
+Cluster                                                                      
+0         336.4           26.6       18.8    9439.0           309         7.1
+1          26.2           62.5        1.9     687.3          1456        33.6
+2         254.3          116.7        4.8    1753.1          1522        35.1
+3         347.3           18.2       82.5  127338.3            13         0.3
+4          31.0          265.3        1.6     645.8          1038        23.9
+
+======================================================================
+INTERPRETACIÓN POR CLUSTER
+======================================================================
+
+
+--- CLUSTER 0 (7.1% de clientes, n=309) ---
+Tipo: CLIENTES VIP/LEALES
+Descripción: Clientes de alto valor y lealtad demostrada
+Métricas promedio:
+  - Length (lealtad): 336.4 días
+  - Recency' (actividad reciente): 26.6 días
+  - Frequency: 18.8 compras
+  - Monetary: $9,439.00
+
+
+--- CLUSTER 1 (33.6% de clientes, n=1456) ---
+Tipo: CLIENTES NUEVOS ACTIVOS
+Descripción: Clientes recientes que han comenzado a comprar
+Métricas promedio:
+  - Length (lealtad): 26.2 días
+  - Recency' (actividad reciente): 62.5 días
+  - Frequency: 1.9 compras
+  - Monetary: $687.30
+
+
+--- CLUSTER 2 (35.1% de clientes, n=1522) ---
+Tipo: CLIENTES EN RIESGO
+Descripción: Clientes leales que están dejando de comprar
+Métricas promedio:
+  - Length (lealtad): 254.3 días
+  - Recency' (actividad reciente): 116.7 días
+  - Frequency: 4.8 compras
+  - Monetary: $1,753.10
+
+
+--- CLUSTER 3 (0.3% de clientes, n=13) ---
+Tipo: CLIENTES VIP/LEALES
+Descripción: Clientes de alto valor y lealtad demostrada
+Métricas promedio:
+  - Length (lealtad): 347.3 días
+  - Recency' (actividad reciente): 18.2 días
+  - Frequency: 82.5 compras
+  - Monetary: $127,338.30
+
+
+--- CLUSTER 4 (23.9% de clientes, n=1038) ---
+Tipo: CLIENTES NUEVOS INACTIVOS
+Descripción: Clientes nuevos que no han vuelto a comprar
+Métricas promedio:
+  - Length (lealtad): 31.0 días
+  - Recency' (actividad reciente): 265.3 días
+  - Frequency: 1.6 compras
+  - Monetary: $645.80
+
+
+======================================================================
+VENTAJAS DEL MODELO LRFMS
+======================================================================
+
+1. Length (L): Distingue clientes nuevos de clientes leales
+   - Elimina confusión entre clientes nuevos y clientes que vuelven
+
+2. Recency' (R'): Más estable que Recency tradicional
+   - Usa promedio de últimas 3 compras en lugar de solo la última
+   - Reduce falsos positivos en detección de clientes en riesgo
+
+3. Base científica:
+   Wang, S., Sun, L. & Yu, Y. (2024).
+   Scientific Reports, 14, 17491.
