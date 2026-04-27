@@ -183,16 +183,24 @@ def run(
 
     feature_cols = [c for c in wide.columns if c != "customer_id"]
 
-    # Feature weighting: S columns get s_weight, others get 1.0
-    # (paper uses variance-based weights; here we use user-supplied weight for S)
     X_raw = wide[feature_cols].values.astype(float)
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_raw)
 
+    # Winsorize at 99th percentile per feature to prevent outliers from pulling clusters
+    p99 = np.percentile(X_raw, 99, axis=0)
+    X_raw = np.minimum(X_raw, p99)
+
+    # Variance-based weights (Wang et al., 2024): weight each feature by its
+    # share of total variance so more discriminative features have greater influence.
+    variances = X_raw.var(axis=0)
+    total_var = variances.sum()
+    var_weights = variances / total_var if total_var > 0 else np.ones(len(variances)) / len(variances)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_raw) * var_weights
+
+    # Additional s_weight: scale S columns relative to other features
     if compute_s and effective_s_weight != 1.0:
         s_cols_idx = [i for i, c in enumerate(feature_cols) if c.startswith("S_")]
-        other_idx = [i for i, c in enumerate(feature_cols) if not c.startswith("S_")]
-        # Rescale S columns by s_weight (relative to other features)
         for idx in s_cols_idx:
             X_scaled[:, idx] *= effective_s_weight
 
@@ -234,6 +242,10 @@ def summarise(df: pd.DataFrame) -> list[dict]:
             entry["avg_monetary"] = round(g["avg_m"].mean(), 1)
             entry["total_revenue"] = round(g["avg_m"].sum(), 1)
             entry["pct_revenue"] = round(g["avg_m"].sum() / df["avg_m"].sum() * 100, 1) if df["avg_m"].sum() > 0 else 0
+        if "avg_r" in df.columns:
+            entry["avg_recency"] = round(g["avg_r"].mean(), 1)
+        if "avg_f" in df.columns:
+            entry["avg_frequency"] = round(g["avg_f"].mean(), 1)
         for col in metric_cols:
             entry[col] = round(g[col].mean(), 2)
         summaries.append(entry)

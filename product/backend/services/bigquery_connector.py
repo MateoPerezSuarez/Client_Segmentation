@@ -12,26 +12,26 @@ except ImportError:
     _BQ_AVAILABLE = False
 
 
-def query_bigquery(credentials_json: str, query: str) -> pd.DataFrame:
+def query_bigquery(credentials_json: str, table_path: str) -> pd.DataFrame:
     if not _BQ_AVAILABLE:
         raise HTTPException(
             status_code=501,
             detail="BigQuery support is not installed. Run: pip install google-cloud-bigquery db-dtypes"
         )
     """
-    Execute a SQL query against BigQuery using a service account JSON key.
+    Fetch all rows from a BigQuery table using a service account JSON key.
 
     Parameters
     ----------
     credentials_json : str
         Full content of a Google service account key file (JSON string).
-    query : str
-        Standard SQL query, e.g.  SELECT * FROM `project.dataset.table` LIMIT 500000
+    table_path : str
+        BigQuery table path, e.g.  project.dataset.table
 
     Returns
     -------
     pd.DataFrame
-        Query results as a DataFrame.
+        Table contents as a DataFrame.
     """
     # Parse credentials
     try:
@@ -53,8 +53,10 @@ def query_bigquery(credentials_json: str, query: str) -> pd.DataFrame:
             detail="Only service account credentials are supported (\"type\": \"service_account\")."
         )
 
-    if not query or not query.strip():
-        raise HTTPException(status_code=400, detail="SQL query cannot be empty.")
+    if not table_path or not table_path.strip():
+        raise HTTPException(status_code=400, detail="Table path cannot be empty.")
+
+    query = f"SELECT * FROM `{table_path.strip()}`"
 
     # Build BigQuery client
     try:

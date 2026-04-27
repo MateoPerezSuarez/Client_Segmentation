@@ -108,14 +108,12 @@ function FilePanel({ onResult }) {
 
 // ── BigQuery panel ─────────────────────────────────────────────────────────────
 
-const DEFAULT_QUERY = 'SELECT *\nFROM `your-project.your_dataset.your_table`\nLIMIT 500000'
-
 function BigQueryPanel({ onResult }) {
   const [credJson, setCredJson] = useState('')
   const [keyFileName, setKeyFileName] = useState(null)
   const [draggingKey, setDraggingKey] = useState(false)
   const [showPaste, setShowPaste] = useState(false)
-  const [query, setQuery] = useState(DEFAULT_QUERY)
+  const [tablePath, setTablePath] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const keyFileRef = useRef(null)
@@ -131,14 +129,14 @@ function BigQueryPanel({ onResult }) {
 
   const clearKey = () => { setCredJson(''); setKeyFileName(null) }
 
-  const canSubmit = credJson.trim().length > 0 && query.trim().length > 0
+  const canSubmit = credJson.trim().length > 0 && tablePath.trim().length > 0
 
   const submit = async () => {
     if (!canSubmit) return
     setLoading(true)
     setError(null)
     try {
-      const result = await uploadBigQuery(credJson.trim(), query.trim())
+      const result = await uploadBigQuery(credJson.trim(), tablePath.trim())
       onResult(result)
     } catch (e) {
       setError(e.response?.data?.detail ?? 'BigQuery connection failed.')
@@ -244,24 +242,25 @@ function BigQueryPanel({ onResult }) {
         )}
       </div>
 
-      {/* SQL Query */}
+      {/* Table path */}
       <div style={{ marginBottom: 20 }}>
         <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 8 }}>
-          {t.queryLabel}
+          {t.tableLabel}
         </label>
-        <textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          rows={5}
+        <input
+          type="text"
+          value={tablePath}
+          onChange={(e) => setTablePath(e.target.value)}
+          placeholder={t.tablePlaceholder}
           spellCheck={false}
           style={{
             width: '100%', fontFamily: 'monospace', fontSize: 13,
             background: 'var(--surface-2)', border: '1px solid var(--border)',
             borderRadius: 8, padding: '10px 12px', color: 'var(--text)',
-            resize: 'vertical', outline: 'none', boxSizing: 'border-box',
+            outline: 'none', boxSizing: 'border-box',
           }}
         />
-        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{t.querySub}</p>
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{t.tableSub}</p>
       </div>
 
       {error && (

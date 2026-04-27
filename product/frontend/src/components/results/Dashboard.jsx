@@ -383,21 +383,18 @@ function ClusterProfileSection({ clusterStats, segments, sessionId, token, onSav
                 {METRICS.map((m) => {
                   const s = c[m.key]
                   if (!s) return <td key={m.key} colSpan={4} style={{ ...TD, color: '#aaa' }}>—</td>
-                  return (
+                  const fmt = (v) => v == null ? '—' : v.toLocaleString(undefined, { maximumFractionDigits: 1 })
+                return (
                     <>
                       <td key={`${m.key}-mean`} style={{ ...TD, borderLeft: '2px solid var(--border)', fontWeight: 600 }}>
-                        {s.mean.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                        {fmt(s.mean)}
                         {m.unit && <span style={{ color: '#aaa', fontWeight: 400, marginLeft: 3 }}>{m.unit}</span>}
                       </td>
                       <td key={`${m.key}-std`}  style={{ ...TD, color: '#888' }}>
-                        ±{s.std.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                        {s.std == null ? '—' : `±${fmt(s.std)}`}
                       </td>
-                      <td key={`${m.key}-min`}  style={{ ...TD, color: '#555' }}>
-                        {s.min.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                      </td>
-                      <td key={`${m.key}-max`}  style={{ ...TD, color: '#555' }}>
-                        {s.max.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                      </td>
+                      <td key={`${m.key}-min`}  style={{ ...TD, color: '#555' }}>{fmt(s.min)}</td>
+                      <td key={`${m.key}-max`}  style={{ ...TD, color: '#555' }}>{fmt(s.max)}</td>
                     </>
                   )
                 })}
@@ -572,6 +569,9 @@ function DashboardLRFMS({ data, segments, sessionId, token, onSegmentsRenamed, t
       </ChartCard>
       <ChartCard title={ch.barRevenue}>
         <BarRevenueShare segments={segments} />
+      </ChartCard>
+      <ChartCard title={ch.bubble} span={3}>
+        <BubbleRFM segments={segments} />
       </ChartCard>
       {data.cluster_stats?.length > 0 && (
         <ChartCard title={ch.clusterLRFMS} span={3}>

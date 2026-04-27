@@ -246,18 +246,39 @@ def get_dashboard_data(session_id: str, token: str):
         b_y = round(float(seg_b["cumulative_pct"].max()) * 100, 1) if len(seg_b) else a_y
         abc_thresholds = {"a_x": a_x, "b_x": b_x, "a_y": a_y, "b_y": b_y}
 
+    def _safe(v, decimals):
+        """Round float; return None if NaN/Inf (JSON-safe)."""
+        import math
+        f = float(v)
+        return None if (math.isnan(f) or math.isinf(f)) else round(f, decimals)
+
     # Per-cluster distribution stats (R/F/M mean, std, min, max)
     cluster_stats = []
+    is_lrfms = "avg_r" in df.columns or "avg_f" in df.columns
     if has_rfm:
         for seg, grp in df.groupby("segment"):
             entry = {"segment": seg}
             for metric in ["recency", "frequency", "monetary"]:
                 entry[metric] = {
-                    "mean": round(float(grp[metric].mean()), 1),
-                    "std":  round(float(grp[metric].std()),  1),
-                    "min":  round(float(grp[metric].min()),  1),
-                    "max":  round(float(grp[metric].max()),  1),
+                    "mean": _safe(grp[metric].mean(), 1),
+                    "std":  _safe(grp[metric].std(),  1),
+                    "min":  _safe(grp[metric].min(),  1),
+                    "max":  _safe(grp[metric].max(),  1),
                 }
+            cluster_stats.append(entry)
+        cluster_stats.sort(key=lambda x: x["segment"])
+    elif is_lrfms:
+        lrfms_metric_map = [("recency", "avg_r"), ("frequency", "avg_f"), ("monetary", "avg_m")]
+        for seg, grp in df.groupby("segment"):
+            entry = {"segment": seg}
+            for stat_key, col in lrfms_metric_map:
+                if col in df.columns:
+                    entry[stat_key] = {
+                        "mean": _safe(grp[col].mean(), 2),
+                        "std":  _safe(grp[col].std(),  2),
+                        "min":  _safe(grp[col].min(),  2),
+                        "max":  _safe(grp[col].max(),  2),
+                    }
             cluster_stats.append(entry)
         cluster_stats.sort(key=lambda x: x["segment"])
 

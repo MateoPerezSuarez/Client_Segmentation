@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 class BigQueryRequest(BaseModel):
     credentials_json: str   # full content of service account key JSON
-    query: str              # standard SQL, e.g. SELECT * FROM `proj.ds.table`
+    table_path: str         # BigQuery table path, e.g. project.dataset.table
 
 
 class AutoMappingRequest(BaseModel):

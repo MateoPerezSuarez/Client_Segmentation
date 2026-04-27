@@ -7,10 +7,10 @@ export async function uploadFile(file) {
   return data  // UploadResponse
 }
 
-export async function uploadBigQuery(credentialsJson, query) {
+export async function uploadBigQuery(credentialsJson, tablePath) {
   const { data } = await api.post('/upload/bigquery', {
     credentials_json: credentialsJson,
-    query,
+    table_path: tablePath,
   })
   return data  // UploadResponse
 }
