@@ -1,0 +1,13 @@
+[build]
+  base    = "product/frontend"
+  command = "npm run build"
+  publish = "dist-app"
+
+[build.environment]
+  VITE_API_BASE_URL = "https://client-segmentation-api-239732584135.europe-west1.run.app"
+
+# SPA fallback — all routes serve index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
