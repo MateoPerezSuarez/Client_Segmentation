@@ -1,14 +1,16 @@
 import asyncio
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from core import session_store as store
 from core.exceptions import DataNotCleaned, SessionNotFound
-from models.requests import ABCRequest, LRFMSRequest, RFMKMeansPreviewRequest, RFMKMeansRequest, RFMQuintilesRequest
-from models.responses import SegmentationResponse, SegmentSummary
+from models.requests import ABCRequest, ExportRequest, LRFMSRequest, RFMKMeansPreviewRequest, RFMKMeansRequest, RFMQuintilesRequest
+from models.responses import ExportResponse, SegmentationResponse, SegmentSummary
+from services import exporter
 from services.aggregator import compute_rfm
 from services.segmentation import abc, lrfms, rfm_kmeans, rfm_quintiles
 from utils.export import to_csv_bytes
@@ -26,9 +28,10 @@ def _require_orders(session_id: str):
     return orders
 
 
-def _save_result(session_id: str, result_df) -> str:
+def _save_result(session_id: str, result_df, method: str, params: dict) -> str:
     token = str(uuid.uuid4())
     store.set_value(session_id, f"download_{token}", result_df)
+    store.set_value(session_id, f"meta_{token}", {"method": method, "params": params})
     return token
 
 
@@ -40,10 +43,12 @@ async def segment_rfm_quintiles(req: RFMQuintilesRequest):
 
     loop = asyncio.get_event_loop()
     rfm = await loop.run_in_executor(_executor, compute_rfm, orders)
-    result = await loop.run_in_executor(_executor, rfm_quintiles.run, rfm, custom)
+    result = await loop.run_in_executor(
+        _executor, lambda: rfm_quintiles.run(rfm, custom, req.n_quantiles)
+    )
 
     summaries = rfm_quintiles.summarise(result)
-    token = _save_result(req.session_id, result)
+    token = _save_result(req.session_id, result, "rfm_quintiles", req.model_dump(exclude={"session_id"}))
 
     return SegmentationResponse(
         method="rfm_quintiles",
@@ -84,7 +89,7 @@ async def segment_rfm_kmeans(req: RFMKMeansRequest):
     )
 
     summaries = rfm_kmeans.summarise(result)
-    token = _save_result(req.session_id, result)
+    token = _save_result(req.session_id, result, "rfm_kmeans", req.model_dump(exclude={"session_id"}))
 
     return SegmentationResponse(
         method="rfm_kmeans",
@@ -105,7 +110,7 @@ async def segment_abc(req: ABCRequest):
     )
 
     summaries = abc.summarise(result)
-    token = _save_result(req.session_id, result)
+    token = _save_result(req.session_id, result, "abc", req.model_dump(exclude={"session_id"}))
 
     return SegmentationResponse(
         method="abc",
@@ -144,7 +149,7 @@ async def segment_lrfms(req: LRFMSRequest):
     )
 
     summaries = lrfms.summarise(result)
-    token = _save_result(req.session_id, result)
+    token = _save_result(req.session_id, result, "lrfms", req.model_dump(exclude={"session_id"}))
 
     return SegmentationResponse(
         method="lrfms",
@@ -282,9 +287,16 @@ def get_dashboard_data(session_id: str, token: str):
             cluster_stats.append(entry)
         cluster_stats.sort(key=lambda x: x["segment"])
 
+    # Detect n_quantiles for rfm_quintiles treemap (max value of Recency_score column)
+    n_quantiles = None
+    score_col = next((c for c in df.columns if c in ("recency_score",)), None)
+    if score_col:
+        n_quantiles = int(df[score_col].max())
+
     return {
         "has_rfm": has_rfm,
         "is_abc": is_abc,
+        "n_quantiles": n_quantiles,
         "pareto_curve": pareto_curve,
         "abc_thresholds": abc_thresholds,
         "scatter": scatter,
@@ -309,3 +321,43 @@ def download_result(session_id: str, token: str):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=segmentation.csv"},
     )
+
+
+@router.post("/export", response_model=ExportResponse)
+async def export_result(req: ExportRequest):
+    """Persist a segmentation run to Google Cloud — BigQuery and/or Cloud Storage.
+
+    Destinations are fully qualified, so they may live in our project or in a
+    client's own project (see services/exporter.py for the required grants).
+    """
+    if not store.exists(req.session_id):
+        raise SessionNotFound(req.session_id)
+
+    result_df = store.get(req.session_id, f"download_{req.token}")
+    if result_df is None:
+        raise HTTPException(status_code=404, detail="Download token not found or expired.")
+
+    if not req.bq_table and not req.gcs_uri:
+        raise HTTPException(status_code=400, detail="Specify at least one destination: bq_table or gcs_uri.")
+
+    meta = store.get(req.session_id, f"meta_{req.token}") or {}
+    run_meta = {
+        "run_id": str(uuid.uuid4()),
+        "run_timestamp": datetime.now(timezone.utc),
+        "method": meta.get("method", "unknown"),
+        "params": meta.get("params", {}),
+    }
+
+    loop = asyncio.get_event_loop()
+    out = ExportResponse(run_id=run_meta["run_id"])
+
+    if req.bq_table:
+        out.bigquery = await loop.run_in_executor(
+            _executor, exporter.export_to_bigquery, result_df, req.bq_table, run_meta
+        )
+    if req.gcs_uri:
+        out.gcs = await loop.run_in_executor(
+            _executor, exporter.export_to_gcs, result_df, req.gcs_uri, run_meta
+        )
+
+    return out

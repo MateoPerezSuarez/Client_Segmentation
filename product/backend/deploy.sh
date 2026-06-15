@@ -5,7 +5,14 @@ set -e
 PROJECT_ID="segmentacion-491208"
 REGION="europe-west1"
 SERVICE_NAME="client-segmentation-api"
-IMAGE="gcr.io/$PROJECT_ID/$SERVICE_NAME"
+
+# Artifact Registry (Container Registry / gcr.io is deprecated).
+AR_REPO="containers"
+IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME"
+
+# Dedicated least-privilege runtime service account (NOT the default Compute SA).
+# Create it once with infra/setup_security.sh before the first deploy.
+RUNTIME_SA="client-segmentation-run@$PROJECT_ID.iam.gserviceaccount.com"
 # ──────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "▶ Building image..."
 docker build --platform linux/amd64 -t "$IMAGE" "$SCRIPT_DIR"
 
-echo "▶ Pushing to Container Registry..."
+echo "▶ Pushing to Artifact Registry..."
 docker push "$IMAGE"
 
 echo "▶ Deploying to Cloud Run..."
@@ -22,6 +29,8 @@ gcloud run deploy "$SERVICE_NAME" \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
+  --service-account "$RUNTIME_SA" \
+  --set-env-vars "BIGQUERY_PROJECT=$PROJECT_ID" \
   --port 8080 \
   --memory 1Gi \
   --cpu 1 \

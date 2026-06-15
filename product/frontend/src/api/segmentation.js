@@ -27,6 +27,16 @@ export function getDownloadUrl(sessionId, token) {
   return `/segment/download/${sessionId}/${token}`
 }
 
+export async function exportResult(sessionId, token, { bqTable, gcsUri } = {}) {
+  const { data } = await api.post('/segment/export', {
+    session_id: sessionId,
+    token,
+    bq_table: bqTable || null,
+    gcs_uri: gcsUri || null,
+  })
+  return data  // ExportResponse: { run_id, bigquery, gcs }
+}
+
 export async function getDashboardData(sessionId, token) {
   const { data } = await api.get(`/segment/dashboard/${sessionId}/${token}`)
   return data
