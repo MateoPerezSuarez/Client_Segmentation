@@ -1,3 +1,29 @@
+# ── Secrets / credentials — never commit ──────────────────────────────────────
+# Service account keys and any Google credentials
+*-service-account*.json
+*service_account*.json
+application_default_credentials.json
+segmentacion-*.json
+elite-firefly-*.json
+/cl/*.json
+*.pem
+*.key
+.env
+.env.*
+credentials/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv
 /venv
-/.claude
+
+# ── Node / frontend build ─────────────────────────────────────────────────────
+node_modules/
 /product/frontend/dist
+/product/frontend/dist-app
+
+# ── OS / tooling ──────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+/.claude

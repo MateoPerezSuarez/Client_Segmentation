@@ -3,8 +3,16 @@ from pydantic import BaseModel
 
 
 class BigQueryRequest(BaseModel):
-    credentials_json: str   # full content of service account key JSON
+    # Authentication uses the backend's own identity (ADC / Workload Identity).
+    # Credentials are never sent from the client.
     table_path: str         # BigQuery table path, e.g. project.dataset.table
+
+
+class ExportRequest(BaseModel):
+    session_id: str
+    token: str                       # download token of the run to export
+    bq_table: Optional[str] = None   # destination, fully qualified: project.dataset.table
+    gcs_uri: Optional[str] = None    # destination prefix: gs://bucket/optional/prefix
 
 
 class AutoMappingRequest(BaseModel):
@@ -18,8 +26,9 @@ class ConfirmMappingRequest(BaseModel):
 
 class CleanRequest(BaseModel):
     session_id: str
-    remove_nulls: bool = True
-    remove_negatives: bool = True
+    null_columns: list[str] = []        # original column names → remove rows with nulls
+    fill_values: dict[str, str] = {}    # original column name → fill value string
+    negative_columns: list[str] = []    # original column names → remove rows with negatives
     remove_duplicates: bool = True
 
 
@@ -30,6 +39,7 @@ class SegmentRule(BaseModel):
 
 class RFMQuintilesRequest(BaseModel):
     session_id: str
+    n_quantiles: int = 5
     custom_segments: Optional[list[SegmentRule]] = None  # None = use built-in defaults
 
 

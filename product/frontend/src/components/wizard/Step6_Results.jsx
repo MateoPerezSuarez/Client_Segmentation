@@ -3,7 +3,7 @@ import {
   ComposedChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ReferenceLine, ResponsiveContainer,
 } from 'recharts'
-import { getDownloadUrl } from '../../api/segmentation'
+import { getDownloadUrl, exportResult } from '../../api/segmentation'
 import { useSessionStore } from '../../store/sessionStore'
 import { useWizardStore } from '../../store/wizardStore'
 import { useT } from '../../i18n/useT'
@@ -41,6 +41,7 @@ export default function Step6_Results() {
     })
   }
   const [showDashboard, setShowDashboard] = useState(false)
+  const [showExport, setShowExport] = useState(false)
 
   if (!result) return <p style={{ color: 'var(--text-muted)' }}>No results yet.</p>
 
@@ -196,6 +197,19 @@ export default function Step6_Results() {
           </a>
 
           <button
+            onClick={() => setShowExport(true)}
+            style={{
+              background: 'transparent', color: 'var(--text)',
+              border: '1px solid var(--border)',
+              borderRadius: 8, padding: '10px 28px',
+              fontWeight: 600, fontSize: 14, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            {t6.exportBtn}
+          </button>
+
+          <button
             onClick={reset}
             style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-sub)', borderRadius: 8, padding: '10px 22px', fontWeight: 500 }}
           >
@@ -214,6 +228,134 @@ export default function Step6_Results() {
           onSegmentsRenamed={handleSegmentsRenamed}
         />
       )}
+
+      {showExport && (
+        <ExportModal
+          sessionId={sessionId}
+          token={result.download_token}
+          t={t6.export}
+          onClose={() => setShowExport(false)}
+        />
+      )}
     </>
+  )
+}
+
+function ExportModal({ sessionId, token, t, onClose }) {
+  const [bqTable, setBqTable] = useState('')
+  const [gcsUri, setGcsUri] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [done, setDone] = useState(null)
+
+  const canSubmit = bqTable.trim().length > 0 || gcsUri.trim().length > 0
+
+  const submit = async () => {
+    if (!canSubmit) { setError(t.needOne); return }
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await exportResult(sessionId, token, {
+        bqTable: bqTable.trim(),
+        gcsUri: gcsUri.trim(),
+      })
+      setDone(res)
+    } catch (e) {
+      setError(e.response?.data?.detail ?? 'Export failed.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const field = {
+    width: '100%', fontFamily: 'monospace', fontSize: 13,
+    background: 'var(--surface-2)', border: '1px solid var(--border)',
+    borderRadius: 8, padding: '10px 12px', color: 'var(--text)',
+    outline: 'none', boxSizing: 'border-box',
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--surface)', borderRadius: 'var(--radius)',
+          border: '1px solid var(--border)', padding: 28,
+          width: 'min(520px, 92vw)', maxHeight: '90vh', overflowY: 'auto',
+        }}
+      >
+        <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>{t.title}</h3>
+
+        {done ? (
+          <div>
+            <div style={{
+              background: 'var(--surface-2)', border: '1px solid var(--green, #2e7d32)',
+              borderRadius: 8, padding: '14px 16px', marginBottom: 20, fontSize: 13, lineHeight: 1.7,
+            }}>
+              <p style={{ fontWeight: 600, marginBottom: 8 }}>✓ {t.successTitle}</p>
+              <p style={{ color: 'var(--text-sub)' }}>{t.runId}: <code>{done.run_id}</code></p>
+              {done.bigquery && (
+                <p style={{ color: 'var(--text-sub)' }}>
+                  {t.bqDone} <code>{done.bigquery.table}</code> ({done.bigquery.rows})
+                  {done.bigquery.view && <> · {t.bqView} <code>{done.bigquery.view}</code></>}
+                </p>
+              )}
+              {done.gcs && (
+                <p style={{ color: 'var(--text-sub)' }}>{t.gcsDone}: <code>{done.gcs.uri}</code></p>
+              )}
+            </div>
+            <button onClick={onClose} style={{ background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 28px', fontWeight: 600, cursor: 'pointer' }}>
+              {t.doneBtn}
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p style={{ color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>{t.intro}</p>
+
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 6 }}>{t.bqLabel}</label>
+              <input type="text" value={bqTable} onChange={(e) => setBqTable(e.target.value)} placeholder={t.bqPlaceholder} spellCheck={false} style={field} />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{t.bqHint}</p>
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 6 }}>{t.gcsLabel}</label>
+              <input type="text" value={gcsUri} onChange={(e) => setGcsUri(e.target.value)} placeholder={t.gcsPlaceholder} spellCheck={false} style={field} />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{t.gcsHint}</p>
+            </div>
+
+            {error && (
+              <div style={{ background: '#f2f2f2', border: '1px solid #bbb', borderRadius: 8, padding: '10px 14px', marginBottom: 18, color: 'var(--text)', fontSize: 13 }}>
+                {error}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                disabled={!canSubmit || loading}
+                onClick={submit}
+                style={{
+                  background: canSubmit && !loading ? 'var(--accent)' : 'var(--border)',
+                  color: canSubmit && !loading ? '#fff' : 'var(--text-muted)',
+                  border: 'none', borderRadius: 8, padding: '10px 28px',
+                  fontWeight: 600, cursor: canSubmit && !loading ? 'pointer' : 'default',
+                }}
+              >
+                {loading ? t.running : t.runBtn}
+              </button>
+              <button onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-sub)', borderRadius: 8, padding: '10px 22px', fontWeight: 500, cursor: 'pointer' }}>
+                {t.cancelBtn}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

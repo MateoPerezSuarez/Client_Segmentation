@@ -32,7 +32,7 @@ async def upload_file(file: UploadFile = File(...)):
 
 @router.post("/bigquery", response_model=UploadResponse)
 def upload_bigquery(req: BigQueryRequest):
-    df = bigquery_connector.query_bigquery(req.credentials_json, req.table_path)
+    df = bigquery_connector.query_bigquery(req.table_path)
 
     sid = store.create_session()
     store.set_value(sid, "raw_df", df)

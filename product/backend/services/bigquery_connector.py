@@ -1,30 +1,32 @@
-"""Connect to Google BigQuery using a service account key and run a SQL query."""
-import json
+"""Connect to Google BigQuery and run a SQL query.
+
+Authentication uses Application Default Credentials (ADC) — the identity of the
+environment the backend runs in:
+
+* On Cloud Run: the service's runtime service account (Workload Identity).
+* Locally for development: run `gcloud auth application-default login`.
+
+Service account key files are intentionally NOT accepted. Credentials must never
+travel through the browser or be embedded in the repository.
+"""
+import os
 
 import pandas as pd
 from fastapi import HTTPException
 
 try:
     from google.cloud import bigquery
-    from google.oauth2 import service_account
     _BQ_AVAILABLE = True
 except ImportError:
     _BQ_AVAILABLE = False
 
 
-def query_bigquery(credentials_json: str, table_path: str) -> pd.DataFrame:
-    if not _BQ_AVAILABLE:
-        raise HTTPException(
-            status_code=501,
-            detail="BigQuery support is not installed. Run: pip install google-cloud-bigquery db-dtypes"
-        )
+def query_bigquery(table_path: str) -> pd.DataFrame:
     """
-    Fetch all rows from a BigQuery table using a service account JSON key.
+    Fetch all rows from a BigQuery table using Application Default Credentials.
 
     Parameters
     ----------
-    credentials_json : str
-        Full content of a Google service account key file (JSON string).
     table_path : str
         BigQuery table path, e.g.  project.dataset.table
 
@@ -33,24 +35,10 @@ def query_bigquery(credentials_json: str, table_path: str) -> pd.DataFrame:
     pd.DataFrame
         Table contents as a DataFrame.
     """
-    # Parse credentials
-    try:
-        creds_dict = json.loads(credentials_json)
-    except (json.JSONDecodeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid credentials: not valid JSON.")
-
-    required_keys = {"type", "project_id", "private_key", "client_email"}
-    missing = required_keys - creds_dict.keys()
-    if missing:
+    if not _BQ_AVAILABLE:
         raise HTTPException(
-            status_code=400,
-            detail=f"Credentials JSON is missing required fields: {', '.join(sorted(missing))}."
-        )
-
-    if creds_dict.get("type") != "service_account":
-        raise HTTPException(
-            status_code=400,
-            detail="Only service account credentials are supported (\"type\": \"service_account\")."
+            status_code=501,
+            detail="BigQuery support is not installed. Run: pip install google-cloud-bigquery db-dtypes",
         )
 
     if not table_path or not table_path.strip():
@@ -58,18 +46,18 @@ def query_bigquery(credentials_json: str, table_path: str) -> pd.DataFrame:
 
     query = f"SELECT * FROM `{table_path.strip()}`"
 
-    # Build BigQuery client
+    # Build BigQuery client from ADC. Project is inferred from the credentials /
+    # GOOGLE_CLOUD_PROJECT, with an optional explicit override.
     try:
-        credentials = service_account.Credentials.from_service_account_info(
-            creds_dict,
-            scopes=["https://www.googleapis.com/auth/bigquery"],
-        )
-        client = bigquery.Client(
-            credentials=credentials,
-            project=creds_dict["project_id"],
-        )
+        client = bigquery.Client(project=os.getenv("BIGQUERY_PROJECT") or None)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Could not authenticate with BigQuery: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Could not initialise BigQuery credentials. The server is not "
+                f"authenticated with Google Cloud: {e}"
+            ),
+        )
 
     # Run query
     try:
@@ -80,12 +68,5 @@ def query_bigquery(credentials_json: str, table_path: str) -> pd.DataFrame:
 
     if df.empty:
         raise HTTPException(status_code=422, detail="Query returned no rows.")
-
-    # Normalise column names (BigQuery may return mixed types in some columns)
-    for col in df.columns:
-        try:
-            df[col] = df[col].where(df[col].isna(), df[col])
-        except Exception:
-            pass
 
     return df.reset_index(drop=True)
